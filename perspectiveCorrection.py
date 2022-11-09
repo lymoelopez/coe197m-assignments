@@ -1,51 +1,47 @@
 import cv2
+from functools import partial
+import math 
 import numpy as np
-import matplotlib.pyplot as plt
-
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg) 
-import tkinter as tk 
-from tkinter import filedialog 
-
 import os
 import sys
-import math 
-from functools import partial
-
+import matplotlib as mpl 
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+from tkinter import filedialog 
+import tkinter as tk 
 
 
 def findHomographyMatrix(sourcePoints, destinationPoints):
 
     # [knowns matrix][unknown homography matrix] = 0
-
     knownsMatrix = np.float32([])
 
     for i in range(4):
 
-        X_sourcePoints = sourcePoints[i][0]
-        Y_sourcepoints = sourcePoints[i][1]
-        X_destinationPoints = destinationPoints[i][0]
-        Y_destinationPoints = destinationPoints[i][1]
+        sourcePointsX = sourcePoints[i][0]
+        sourcePointsY = sourcePoints[i][1]
+        destinationPointsX = destinationPoints[i][0]
+        destinationPointsY = destinationPoints[i][1]
 
-        a = -1 * X_destinationPoints * X_sourcePoints
-        b = -1 * X_destinationPoints * Y_sourcepoints
-    
-        c = -1 * Y_destinationPoints * X_sourcePoints
-        d = -1 * Y_destinationPoints * Y_sourcepoints
+        a = -destinationPointsX * sourcePointsX
+        b = -destinationPointsX * sourcePointsY
+        c = -destinationPointsY * sourcePointsX
+        d = -destinationPointsY * sourcePointsY
 
-        firstRow = np.float32([X_sourcePoints, Y_sourcepoints, 1, 0, 0, 0, a, b, -X_destinationPoints])
-        secondRow = np.float32([0, 0, 0, X_sourcePoints, Y_sourcepoints, 1, c, d, -Y_destinationPoints])
+        firstRow = np.float32([sourcePointsX, sourcePointsY, 1, 0, 0, 0, a, b, -destinationPointsX])
+        secondRow = np.float32([0, 0, 0, sourcePointsX, sourcePointsY, 1, c, d, -destinationPointsY])
 
         knownsMatrix = np.append(knownsMatrix, firstRow)
         knownsMatrix = np.append(knownsMatrix, secondRow)
 
-    knownsMatrix = np.reshape(knownsMatrix, (8,9))
+    knownsMatrix = np.reshape(knownsMatrix, (8, 9))
 
     # Least Squares Estimation
     eigenValue, eigenVector = np.linalg.eig(np.matmul(knownsMatrix.T, knownsMatrix))
-    eigenVector  = eigenVector[0:,np.argmin(eigenValue)]
-    homography = np.reshape(eigenVector, (3,3))
+    eigenVector  = eigenVector[0:, np.argmin(eigenValue)]
+    homographyMatrix = np.reshape(eigenVector, (3, 3))
 
-    return homography 
+    return homographyMatrix 
 
 
 def openFile():
@@ -58,18 +54,19 @@ def openFile():
 def loadImage(filePath):
 
     rawImage = cv2.imread(filePath) 
-    rawImage = cv2.cvtColor(rawImage,cv2.COLOR_BGR2RGB)
+    rawImage = cv2.cvtColor(rawImage, cv2.COLOR_BGR2RGB)
 
     return rawImage
 
 
 def selectSourcePoints(rawImage):
 
+    mpl.rcParams['toolbar'] = 'None' 
     plt.figure("Select Source Points") 
     plt.imshow(rawImage)
-    plt.title("Select points in a counterclockwise order [begin on the upper left corner]")
+    plt.title("Select points in a counterclockwise order [begin on the upper left corner].")
     plt.axis("off")
-    rawInputPoints = plt.ginput(4)
+    rawInputPoints = plt.ginput(4, 0)
     plt.close()
 
     return rawInputPoints
@@ -87,105 +84,120 @@ def createFigure(image, title):
 
 def plotSelectedSourcePoints(rawInputPoints, imagePlot): 
 
-    x_rawInputPoints = [rawInputPoints[0][0], rawInputPoints[1][0], rawInputPoints[2][0], rawInputPoints[3][0], rawInputPoints[0][0]]
-    y_rawInputPoints = [rawInputPoints[0][1], rawInputPoints[1][1], rawInputPoints[2][1], rawInputPoints[3][1], rawInputPoints[0][1]]
+    rawInputPointsX = [rawInputPoints[0][0], rawInputPoints[1][0], rawInputPoints[2][0], rawInputPoints[3][0], rawInputPoints[0][0]]
+    rawInputPointsY = [rawInputPoints[0][1], rawInputPoints[1][1], rawInputPoints[2][1], rawInputPoints[3][1], rawInputPoints[0][1]]
 
-    imagePlot.plot(x_rawInputPoints, y_rawInputPoints, color='red', alpha=0.4, linewidth=2, solid_capstyle='round', zorder=2)
+    imagePlot.plot(rawInputPointsX, rawInputPointsY, color='red', alpha=0.4, linewidth=2, solid_capstyle='round', zorder=2)
 
 
 def plotFigure(fig):
- 
-    canvas = FigureCanvasTkAgg(fig, master = imageFrame)  
+    canvas = FigureCanvasTkAgg(fig, master=imageFrame)  
     canvas.get_tk_widget().pack(fill=tk.BOTH, side=tk.LEFT, expand= True)
 
 
 def findSourcePoints(rawInputPoints):
 
-    upperLeft = rawInputPoints[0]
-    lowerLeft = rawInputPoints[1]
-    lowerRight = rawInputPoints[2]
-    upperRight = rawInputPoints[3]    
+    # sourcePoints = [upperLeft, lowerLeft, lowerRight, upperRight]
+    sourcePoints = np.float32([rawInputPoints[0], rawInputPoints[1], rawInputPoints[2], rawInputPoints[3]])
+    sourcePointsCenter = np.mean(sourcePoints, axis=0)
 
-    sourcePoints = np.float32([upperLeft, lowerLeft, lowerRight, upperRight])
-
-    return sourcePoints
+    return sourcePoints, sourcePointsCenter
 
 
-def findDestinationPoints(sourcePoints): 
+def findCroppedDimensions(sourcePoints):
 
-    #   A----D
-    #   |    |
-    #   B----C
-
-    pointA = sourcePoints[0]
-    pointB = sourcePoints[1]
-    pointC = sourcePoints[2]
+    pointA = sourcePoints[0]    #   A----D
+    pointB = sourcePoints[1]    #   |    |
+    pointC = sourcePoints[2]    #   B----C
     pointD = sourcePoints[3]
 
-    lineAD = np.linalg.norm([pointA[0] - pointD[0], pointA[1] - pointD[1]])
-    lineBC = np.linalg.norm([pointB[0] - pointC[0], pointB[1] - pointC[1]])
-    destinationWidth = max(int(lineAD), int(lineBC))
+    lineAD = np.linalg.norm(pointA-pointD)
+    lineBC = np.linalg.norm(pointB-pointC)
+    lineAB = np.linalg.norm(pointA-pointB)
+    lineCD = np.linalg.norm(pointC-pointD)
 
-    lineAB = np.linalg.norm([pointA[0] - pointB[0], pointA[1] - pointB[1]])
-    lineCD = np.linalg.norm([pointC[0] - pointD[0], pointC[1] - pointD[1]])
-    destinationHeight = max(int(lineAB), int(lineCD))
+    croppedWidth = max(int(lineAD), int(lineBC))
+    croppedHeight = max(int(lineAB), int(lineCD))
+    croppedDimensions = [croppedWidth, croppedHeight]
 
-    x_sourceCenter, y_sourceCenter = np.mean(sourcePoints, axis=0)
+    return croppedDimensions
 
-    halfDestinationWidth = int(destinationWidth/2)
-    halfDestinationHeight = int(destinationHeight/2)
 
-    # centered at (0, 0)
-    destinationPoints = np.float32([
-        [-halfDestinationWidth, -halfDestinationHeight],
-        [-halfDestinationWidth, halfDestinationHeight],
-        [halfDestinationWidth, halfDestinationHeight],
-        [halfDestinationWidth, -halfDestinationHeight]
+def findDestinationPoints(croppedDimensions): 
+
+    halfCroppedWidth = int(croppedDimensions[0]/2)
+    halfCroppedHeight = int(croppedDimensions[1]/2)
+
+    originCenteredDestinationPoints = np.float32([
+        [-halfCroppedWidth, -halfCroppedHeight],
+        [-halfCroppedWidth, halfCroppedHeight],
+        [halfCroppedWidth, halfCroppedHeight],
+        [halfCroppedWidth, -halfCroppedHeight]
     ])
 
-    return destinationPoints, destinationWidth, destinationHeight, x_sourceCenter, y_sourceCenter
+    croppedDestinationCenter = np.array([halfCroppedWidth, halfCroppedHeight])
+    croppedDestinationPoints = originCenteredDestinationPoints + croppedDestinationCenter
+
+    return originCenteredDestinationPoints, croppedDestinationPoints 
 
 
-def transformImage(rawImage, rawInputPoints, cropped):
-
-    undistortSelectionButton.destroy()
-    undistortFullButton.destroy()
+def findRawImageDimensions(rawImage):
 
     rawImageHeight, rawImageWidth = rawImage.shape[:2]
-    undistortedImageWidth = undistortedImageHeight = round(math.hypot(rawImageHeight,rawImageWidth))
+    rawImageDiagonal = round(math.hypot(rawImageHeight, rawImageWidth))
+    rawImageDimensions = [rawImageHeight, rawImageWidth, rawImageDiagonal]
 
-    sourcePoints = findSourcePoints(rawInputPoints)
-    destinationPoints, destinationWidth, destinationHeight, x_sourceCenter, y_sourceCenter= findDestinationPoints(sourcePoints)
+    return rawImageDimensions 
+
+
+def findFullDestinationCenter(sourcePointsCenter, rawImageDimensions): 
+
+    rawImageHeight, rawImageWidth, rawImageDiagonal = rawImageDimensions
+
+    destinationCenterX = (sourcePointsCenter[0]/rawImageWidth) * rawImageDiagonal
+    destinationCenterY = (sourcePointsCenter[1]/rawImageHeight) * rawImageDiagonal
+    fullDestinationCenter =  np.array([destinationCenterX, destinationCenterY])
+
+    return fullDestinationCenter 
+
+
+def findUndistortedImage(rawImage, rawInputPoints, cropped):
+
+    sourcePoints, sourcePointsCenter = findSourcePoints(rawInputPoints)
+    croppedDimensions = findCroppedDimensions(sourcePoints)
+    originCenteredDestinationPoints, croppedDestinationPoints = findDestinationPoints(croppedDimensions)
 
     if cropped:
-        destinationPoints = destinationPoints + np.array([int(destinationWidth/2), int(destinationHeight/2)])
-        undistortedImageWidth = destinationWidth
-        undistortedImageHeight = destinationHeight
+        destinationPoints = croppedDestinationPoints 
+        undistortedImageWidth, undistortedImageHeight = croppedDimensions
     else:
-        x_destinationCenter = (x_sourceCenter/rawImageWidth) * undistortedImageWidth
-        y_destinationCenter = (y_sourceCenter/rawImageHeight) * undistortedImageHeight
-        destinationPoints = destinationPoints + np.array([x_destinationCenter, y_destinationCenter])
+        rawImageDimensions = findRawImageDimensions(rawImage)
+        fullDestinationCenter  = findFullDestinationCenter(sourcePointsCenter, rawImageDimensions)
+        destinationPoints = originCenteredDestinationPoints + fullDestinationCenter
 
-    homographyMatrix = findHomographyMatrix(sourcePoints, destinationPoints)
-
-    undistortedImage = cv2.warpPerspective(rawImage, homographyMatrix, (undistortedImageWidth, undistortedImageHeight), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0))
+        undistortedImageWidth = undistortedImageHeight = rawImageDimensions[2]
+        
+    homographyMatrix = findHomographyMatrix(sourcePoints, destinationPoints)    
+    undistortedImage = cv2.warpPerspective(rawImage, homographyMatrix, (undistortedImageWidth, undistortedImageHeight), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0))
 
     return undistortedImage
 
 
 def saveFile():
+
     filepath = filedialog.asksaveasfilename(defaultextension=".jpg")
+
     return filepath
 
 
 def openButtonFunctions():
-
+    
     filePath = openFile()
     if not filePath:
         return
 
     openButton.destroy()
-
+    
     rawImage = loadImage(filePath)
     rawInputPoints = selectSourcePoints(rawImage)
 
@@ -198,7 +210,10 @@ def openButtonFunctions():
 
 def undistortButtonFunctions(rawImage, rawInputPoints, cropped):
 
-    undistortedImage = transformImage(rawImage, rawInputPoints, cropped)
+    undistortFullImageButton.destroy()
+    undistortSelectionButton.destroy()
+
+    undistortedImage = findUndistortedImage(rawImage, rawInputPoints, cropped)
     fig, imagePlot = createFigure(undistortedImage, 'Undistorted Image')
     plotFigure(fig)
 
@@ -224,21 +239,21 @@ def resetButtonFunction():
 
 def createUndistortButtons(rawImage, rawInputPoints):
 
-    global undistortFullButton, undistortSelectionButton
+    global undistortFullImageButton, undistortSelectionButton
 
-    undistortFullButton = tk.Button(
+    undistortFullImageButton = tk.Button(
         master = buttonFrame, 
-        command = partial (undistortButtonFunctions, rawImage, rawInputPoints, 0),
+        command = partial(undistortButtonFunctions, rawImage, rawInputPoints, 0),
         text = "Undistort (Full Image)"
     )
 
     undistortSelectionButton = tk.Button(
         master = buttonFrame, 
-        command = partial (undistortButtonFunctions, rawImage, rawInputPoints, 1),
+        command = partial(undistortButtonFunctions, rawImage, rawInputPoints, 1),
         text = "Undistort (Crop to Selection)"
     )
 
-    undistortFullButton.pack(side=tk.LEFT)
+    undistortFullImageButton.pack(side=tk.LEFT)
     undistortSelectionButton.pack(side=tk.LEFT)
 
 
@@ -254,13 +269,13 @@ def createResetAndSaveButtons(undistortedImage):
 
     saveButton = tk.Button(
         master = buttonFrame, 
-        command = partial (saveButtonFunction, undistortedImage, 0),
+        command = partial(saveButtonFunction, undistortedImage, 0),
         text = "Save"
     )
 
     saveAsButton = tk.Button(
         master = buttonFrame, 
-        command = partial (saveButtonFunction, undistortedImage, 1),
+        command = partial(saveButtonFunction, undistortedImage, 1),
         text = "Save As"
     )
 
@@ -269,9 +284,7 @@ def createResetAndSaveButtons(undistortedImage):
     saveAsButton.pack(side=tk.LEFT)
 
 
-
 window = tk.Tk()
-
 window.title("Perspective Correction")
 window.geometry("800x500")
 
