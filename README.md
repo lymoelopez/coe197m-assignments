@@ -1,6 +1,6 @@
 # Projective Distortion Removal Tool
 
-A simple python program used to remove the projective distortion on images. This repository serves as my submission for our first activity in **Foundations of Machine Learning** (CoE 197M)
+A simple python program used to remove the projective distortion on images. This repository serves as my submission for our first activity in **Foundations of Machine Learning** (CoE 197M).
 
 
 ## Usage
@@ -42,9 +42,9 @@ python3 perspectiveCorrection.py
 
 ###### Note: The `Save` button saves the undistorted image as `undistorted.jpg`; its location is the directory containing `perspectiveCorrection.py`.
 
-###### Note: The default file extension for `Save As` is `.jpg`
+###### Note: The default file extension for `Save As` is `.jpg`.
 
-#### 8. To undistort another image, select the `Try Again` Button
+#### 8. To undistort another image, select the `Try Again` Button.
 
 ## References
 
