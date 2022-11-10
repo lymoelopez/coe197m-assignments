@@ -46,16 +46,6 @@ python3 perspectiveCorrection.py
 
 #### 8. To undistort another image, select the `Try Again` Button.
 
-## References
-
-[1] [Perspective Transformation](https://theailearner.com/2020/11/06/perspective-transformation/)
-
-[2] [Perspective correction in OpenCV using python](https://stackoverflow.com/questions/22656698/perspective-correction-in-opencv-using-python)
-
-[3] [OpenCV Python: How to warpPerspective a large image based on transform inferred from small region](https://stackoverflow.com/questions/64825835/opencv-python-how-to-warpperspective-a-large-image-based-on-transform-inferred)
-
-[4] [Computing Homography | Image Stitching](https://youtu.be/l_qjO4cM74o)
-
 ## Sample Outputs
 
 <table>
@@ -85,3 +75,14 @@ python3 perspectiveCorrection.py
 </tr>
 
 </table>
+
+## References
+
+[1] [Perspective Transformation](https://theailearner.com/2020/11/06/perspective-transformation/)
+
+[2] [Perspective correction in OpenCV using python](https://stackoverflow.com/questions/22656698/perspective-correction-in-opencv-using-python)
+
+[3] [OpenCV Python: How to warpPerspective a large image based on transform inferred from small region](https://stackoverflow.com/questions/64825835/opencv-python-how-to-warpperspective-a-large-image-based-on-transform-inferred)
+
+[4] [Computing Homography | Image Stitching](https://youtu.be/l_qjO4cM74o)
+
