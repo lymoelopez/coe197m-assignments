@@ -4,12 +4,25 @@ A python program used to estimate the degree and coefficients of a degree 4 or l
 
 
 ## Usage
-#### 1. Open the polynomial solver with:
 
 ``` bash
-python3 solver.py
+python3 solver.py [-h] [--trainData TRAINDATA] [--testData TESTDATA] [--model MODEL] [--batchSize BATCHSIZE] [--lr LR] [--epoch EPOCH] [--degree DEGREE]
+                 [--showTrainPlot] [--showTestPlot] [--dontShowPolynomial] [--dontTrainModel] [--dontTestModel]
 ```
-> Note: 
+## Optional Arguments
+* `-h, --help`= show this help message and exit
+* `--trainData TRAINDATA` = select training data (default: data/data_train.csv)
+* `--testData TESTDATA` = select testing data (default: data/data_test.csv)
+* `--model MODEL` = select model for testing/select model save location and filename (default: model/trainedModel.pth)
+* `--batchSize BATCHSIZE` = select batch size (default: 1)
+* `--lr LR` = select learning rate (default: 0.001)
+* `--epoch EPOCH` = nuber of training iterations (default: 150)
+* `--degree DEGREE` = select model degree for training (default: find best model)
+* `--showTrainPlot` = select to plot training data and polynomial model
+* `--showTestPlot` = select to plot testing data and polynomial model
+* `--dontShowPolynomial` = select to not print predicted polynomial
+* `--dontTrainModel` = select to not train model
+* `--dontTestModel` = select to not test model
 
 
 ## References
