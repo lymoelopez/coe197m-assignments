@@ -9,8 +9,8 @@ def argparser():
 
     parser.add_argument('--batchSize', type=int, default=1, help='select batch size (default = 1)')
     parser.add_argument('--lr', type=float, default=0.001, help='select learning rate (default = 0.001)')
-    parser.add_argument('--epoch', type=int, default=200, help='nuber of training iterations (default = 150)')
-    parser.add_argument('--degree', type=int, default=5, help='select model degree for training (default: find best model)')
+    parser.add_argument('--epoch', type=int, default=200, help='nuber of training iterations (default = 200)')
+    parser.add_argument('--degree', type=int, default=5, help='select model degree for training (default: use all to find best model)')
 
     parser.add_argument('--showTrainPlot', action='store_true', default=False, help='select to plot training data and polynomial model')
     parser.add_argument('--showTestPlot', action='store_true', default=False, help='select to plot testing data and polynomial model')
