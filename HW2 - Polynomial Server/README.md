@@ -1,4 +1,4 @@
-# Projective Distortion Removal Tool
+# Polynomial Solver
 
 A python program used to estimate the degree and coefficients of a degree 4 or lower polynomial. This solver implments SGD with  [tinygrad](https://github.com/geohot/tinygrad).
 
