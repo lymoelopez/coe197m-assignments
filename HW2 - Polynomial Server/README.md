@@ -10,7 +10,7 @@ python3 solver.py [-h] [--trainData TRAINDATA] [--testData TESTDATA] [--model MO
                  [--showTrainPlot] [--showTestPlot] [--dontShowPolynomial] [--dontTrainModel] [--dontTestModel]
 ```
 ## Optional Arguments
-* `-h, --help`= show this help message and exit
+* `-h, --help` = show this help message and exit
 * `--trainData TRAINDATA` = select training data (default: data/data_train.csv)
 * `--testData TESTDATA` = select testing data (default: data/data_test.csv)
 * `--model MODEL` = select model for testing/select model save location and filename (default: model/trainedModel.pth)
