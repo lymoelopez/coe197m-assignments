@@ -16,8 +16,8 @@ python3 solver.py [-h] [--trainData TRAINDATA] [--testData TESTDATA] [--model MO
 * `--model MODEL` = select model for testing/select model save location and filename (default: model/trainedModel.pth)
 * `--batchSize BATCHSIZE` = select batch size (default: 1)
 * `--lr LR` = select learning rate (default: 0.001)
-* `--epoch EPOCH` = nuber of training iterations (default: 150)
-* `--degree DEGREE` = select model degree for training (default: find best model)
+* `--epoch EPOCH` = nuber of training iterations (default: 200)
+* `--degree DEGREE` = select model degree for training (default: use all to find best model)
 * `--showTrainPlot` = select to plot training data and polynomial model
 * `--showTestPlot` = select to plot testing data and polynomial model
 * `--dontShowPolynomial` = select to not print predicted polynomial
